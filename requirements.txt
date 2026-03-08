@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+httpx
+uvicorn[standard]
+fastapi
+boto3
+python-dotenv
+requests
+google-genai
+openai
