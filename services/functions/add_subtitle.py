@@ -14,7 +14,7 @@ from openai import OpenAI
 app = FastAPI()
 
 # --- CONFIG ---
-LEMONFOX_API_KEY = "BIscybQTU3xYIGPbZWlHmXjkwgwO4mQx" 
+LEMONFOX_API_KEY = os.environ["LEMONFOX_API_KEY"] 
 client = OpenAI(
     api_key=LEMONFOX_API_KEY,
     base_url="https://api.lemonfox.ai/v1"
