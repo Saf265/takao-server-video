@@ -34,10 +34,25 @@ class KaraokeRequest(BaseModel):
 def format_ass_timestamp(seconds: float) -> str:
     seconds = max(0, seconds)
     h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
+    m = int((seconds // 60) % 60)
     s = int(seconds % 60)
     c = int((seconds % 1) * 100)
     return f"{h}:{m:02d}:{s:02d}.{c:02d}"
+
+def hex_to_ass_color(hex_color: Optional[str]) -> str:
+    if not hex_color:
+        return "00FF00"  # default green
+    clean_hex = hex_color.lstrip('#')
+    if len(clean_hex) == 6:
+        # rrggbb -> bbggrr
+        return f"{clean_hex[4:6]}{clean_hex[2:4]}{clean_hex[0:2]}"
+    elif len(clean_hex) == 3:
+        # rgb -> bbggrr
+        r = clean_hex[0] * 2
+        g = clean_hex[1] * 2
+        b = clean_hex[2] * 2
+        return f"{b}{g}{r}"
+    return "00FF00"
 
 def cleanup_dir(path: str):
     if os.path.exists(path):
@@ -135,6 +150,8 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
 
         # 4. Génération des lignes synchronisées
         chunk_size = 7
+        ass_highlight_color = hex_to_ass_color(request.caption_color)
+        
         for i in range(len(words)):
             start_chunk = (i // chunk_size) * chunk_size
             end_chunk = min(len(words), start_chunk + chunk_size)
@@ -150,7 +167,7 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
             line_parts = []
             for idx, w_item in enumerate(phrase_words):
                 if (start_chunk + idx) == i:
-                    line_parts.append(f"{{\\c&H00FF00&}}{w_item.text}{{\\c&HFFFFFF&}}")
+                    line_parts.append(f"{{\\c&H{ass_highlight_color}&}}{w_item.text}{{\\c&HFFFFFF&}}")
                 else:
                     line_parts.append(w_item.text)
             

@@ -70,7 +70,8 @@ async def create_video_second(request: ClipSecondStep, background_tasks: Backgro
   karaoke_request = KaraokeRequest(
       video_url=request.clip_url,
       audio_url=voiceover_url,
-      language=request.settings.language
+      language=request.settings.language,
+      caption_color=request.settings.caption_color
   )
 
   # On génère la vidéo finale avec sous-titres (add_karaoke_subtitles est deja async)
