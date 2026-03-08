@@ -87,7 +87,7 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
                 model="whisper-1",
                 file=audio_file,
                 response_format="verbose_json",
-                language="fr",
+                language=request.language,
                 timestamp_granularities=["word"]
             )
 
@@ -166,16 +166,32 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
         ffmpeg_cmd = ["ffmpeg", "-y", "-i", video_path]
         
         if has_external_audio:
-            # Si audio externe, on prend la vidéo du premier input et l'audio du second
-            ffmpeg_cmd += ["-i", audio_path, "-map", "0:v:0", "-map", "1:a:0"]
+            # On ajoute l'audio externe comme 2ème input
+            ffmpeg_cmd += ["-i", audio_path]
+            # On mixe l'audio original (0:a) avec l'audio externe (1:a)
+            # Et on applique le sous-titre karaoké dans le même filter_complex
+            ffmpeg_cmd += [
+                "-filter_complex", 
+                f"[0:v]ass='{clean_ass_path}'[v];[0:a][1:a]amix=inputs=2:duration=first[a]",
+                "-map", "[v]", 
+                "-map", "[a]"
+            ]
         else:
-            # Sinon on garde tout du premier input
-            ffmpeg_cmd += ["-map", "0:v:0", "-map", "0:a:0"]
+            # On prend TOUT l'audio du fichier original (0:a?) 
+            # Le '?' évite que ça crash si la vidéo n'a pas de son du tout
+            ffmpeg_cmd += [
+                "-vf", f"ass='{clean_ass_path}'",
+                "-map", "0:v:0", 
+                "-map", "0:a?"
+            ]
 
         ffmpeg_cmd += [
-            "-vf", f"ass='{clean_ass_path}'",
-            "-c:v", "libx264", "-preset", "ultrafast",
-            "-c:a", "aac", "-b:a", "192k", # Ré-encodage propre de l'audio
+            "-c:v", "libx264", 
+            "-preset", "ultrafast",
+            "-c:a", "aac", 
+            "-b:a", "192k",
+            "-ac", "2", # Force en stéréo pour éviter les problèmes de compatibilité
+            "-map_metadata", "0", # Garde les métadonnées originales (date, rotation, etc.)
             "-shortest", 
             output_path
         ]
@@ -185,7 +201,7 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
             raise RuntimeError(f"FFmpeg failed: {process.stderr}")
 
         background_tasks.add_task(cleanup_dir, work_dir)
-        return FileResponse(output_path, media_type="video/mp4", filename="karaoke_final.mp4")
+        return output_path
 
     except Exception as e:
         traceback.print_exc()

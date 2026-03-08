@@ -6,6 +6,7 @@ from typing import Optional
 class VideoSettingsFirstStep(BaseModel):
     background_music_url: Optional[str] = None
     is_blur_background: bool
+
 class ClipFirstStep(BaseModel):
     clip_url: str
     settings: VideoSettingsFirstStep
@@ -41,3 +42,8 @@ class VoiceOverModel(BaseModel):
     start_time: float
     end_time: float
     subtitles: list[SubtilteDict]
+
+class KaraokeRequest(BaseModel):
+    video_url: str
+    audio_url: Optional[str] = None
+    language: str = "fr"
