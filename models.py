@@ -48,3 +48,4 @@ class KaraokeRequest(BaseModel):
     audio_url: Optional[str] = None
     language: str = "fr"
     caption_color: Optional[str] = None
+    

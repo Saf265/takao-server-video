@@ -30,6 +30,7 @@ app.add_middleware(
 
 @app.post("/process-video-first")
 async def create_video(request: ClipFirstStep):
+    
   # Exécution du traitement dans un thread séparé
   base_video_path = await anyio.to_thread.run_sync(add_video, request.clip_url, request.settings.is_blur_background)
 

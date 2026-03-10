@@ -46,7 +46,7 @@ Write the final voice over narration.
   client = genai.Client(api_key=GEN_AI_API_KEY)
 
   response = client.models.generate_content(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     contents=prompt
   )
 
