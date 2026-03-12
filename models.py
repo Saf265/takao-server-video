@@ -29,7 +29,7 @@ class SubtilteDict(BaseModel):
     duration: float
 
 class ClipSecondStep(BaseModel):
-    id: int
+    id: str
     clip_url: str
     settings: VideoSettingsSecondStep
     start_time: float
