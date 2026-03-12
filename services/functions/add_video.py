@@ -19,8 +19,6 @@ def add_video(video_url: str, use_blur: bool = False):
     try:
         download_file(video_url, input_path)
 
-        # Utilisation de force_original_aspect_ratio=increase pour garantir que l'image
-        # remplit TOUJOURS la zone de crop, peu importe le ratio d'entrée.
         if use_blur:
             filter_complex = (
                 "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,gblur=sigma=15[bg]; "

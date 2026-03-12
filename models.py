@@ -10,6 +10,8 @@ class VideoSettingsFirstStep(BaseModel):
 class ClipFirstStep(BaseModel):
     clip_url: str
     settings: VideoSettingsFirstStep
+    webhook_url: Optional[str] = None
+    job_id: Optional[str] = None
 
 
 
@@ -33,6 +35,8 @@ class ClipSecondStep(BaseModel):
     start_time: float
     end_time: float
     subtitles: list[SubtilteDict]
+    webhook_url: Optional[str] = None
+    job_id: Optional[str] = None
 
 # * ----------------------- SECOND STEP - VOICEOVER --------------
 
