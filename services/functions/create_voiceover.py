@@ -19,6 +19,8 @@ def create_voiceover(data: VoiceOverModel):
   clip_text = " ".join(filtered_subtitles)
   full_text = " ".join([s.text for s in data.subtitles])
 
+  language_instruction = "Write the final voice over narration in French." if data.language == "fr" else "Write the final voice over narration in English."
+
   prompt = f"""
 You are a viral short-form video writer.
 
@@ -41,7 +43,7 @@ Full video subtitles (context):
 Clip subtitles (important part):
 {clip_text}
 
-Write the final voice over narration.
+{language_instruction}
 """
   client = genai.Client(api_key=GEN_AI_API_KEY)
 
