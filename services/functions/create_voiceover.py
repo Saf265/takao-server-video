@@ -27,15 +27,14 @@ You are a viral short-form video writer.
 Your job is to create a viral voice over for a clip.
 
 Rules:
-- The voice over must be between 190 and 210 words
-- The tone must be engaging and emotional
+- The voice over must be between 240 and 260 words
+- The tone must be extremely engaging, emotional and FAST-PACED
+- Narrative style: Energetic, rapid-fire delivery, NO SILENCE between sentences
 - Make it optimized for TikTok / Reels / Shorts
 - Use strong hooks and curiosity
-- Short sentences
 - No emojis
 - No explanations
-- Keep sentences under 12 words
-- Use natural pauses
+- Keep transitions snappy to maintain a high-tempo pace
 
 Full video subtitles (context):
 {full_text}
@@ -59,7 +58,7 @@ Clip subtitles (important part):
 
   response = client.models.generate_content(
     model="gemini-2.5-flash-preview-tts",
-    contents=script,
+    contents=f"(Speak very fast with an energetic, high-tempo pace. No silence between sentences): {script}",
     config=types.GenerateContentConfig(
         response_modalities=["AUDIO"],
         speech_config=types.SpeechConfig(
