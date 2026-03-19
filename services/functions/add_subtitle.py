@@ -71,6 +71,18 @@ def get_video_dimensions(video_path: str):
     except:
         return 1080, 1920 # Default vertical
 
+def has_audio(file_path: str) -> bool:
+    cmd = [
+        "ffprobe", "-v", "error", "-select_streams", "a",
+        "-show_entries", "stream=index", "-of", "json", file_path
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        data = json.loads(result.stdout)
+        return len(data.get("streams", [])) > 0
+    except:
+        return False
+
 async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: BackgroundTasks):
     session_id = str(uuid.uuid4())
     work_dir = os.path.join(os.getcwd(), "tmp", f"karaoke_{session_id}")
@@ -185,14 +197,25 @@ async def add_karaoke_subtitles(request: KaraokeRequest, background_tasks: Backg
         if has_external_audio:
             # On ajoute l'audio externe comme 2ème input
             ffmpeg_cmd += ["-i", audio_path]
-            # On mixe l'audio original (0:a) avec l'audio externe (1:a)
-            # Et on applique le sous-titre karaoké dans le même filter_complex
-            ffmpeg_cmd += [
-                "-filter_complex", 
-                f"[0:v]ass='{clean_ass_path}'[v];[0:a][1:a]amix=inputs=2:duration=first[a]",
-                "-map", "[v]", 
-                "-map", "[a]"
-            ]
+            
+            # On vérifie si la vidéo originale a du son
+            if has_audio(video_path):
+                # On mixe l'audio original (0:a) avec l'audio externe (1:a)
+                # Et on applique le sous-titre karaoké dans le même filter_complex
+                ffmpeg_cmd += [
+                    "-filter_complex", 
+                    f"[0:v]ass='{clean_ass_path}'[v];[0:a][1:a]amix=inputs=2:duration=first[a]",
+                    "-map", "[v]", 
+                    "-map", "[a]"
+                ]
+            else:
+                # La vidéo n'a pas de son, on utilise uniquement l'audio externe
+                ffmpeg_cmd += [
+                    "-filter_complex", 
+                    f"[0:v]ass='{clean_ass_path}'[v]",
+                    "-map", "[v]", 
+                    "-map", "1:a"
+                ]
         else:
             # On prend TOUT l'audio du fichier original (0:a?) 
             # Le '?' évite que ça crash si la vidéo n'a pas de son du tout

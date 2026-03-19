@@ -2,6 +2,19 @@ import subprocess
 from services.functions.add_video import download_file
 import uuid
 import os
+import json
+
+def has_audio(file_path: str) -> bool:
+    cmd = [
+        "ffprobe", "-v", "error", "-select_streams", "a",
+        "-show_entries", "stream=index", "-of", "json", file_path
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        data = json.loads(result.stdout)
+        return len(data.get("streams", [])) > 0
+    except:
+        return False
 def add_voiceover(voiceover_tmp: str, base_video_url: str):
   uid = uuid.uuid4().hex
   base_video_tmp = f"tmp/base_video_{uid}.mp4"
@@ -11,25 +24,31 @@ def add_voiceover(voiceover_tmp: str, base_video_url: str):
     # 1. Télécharger la musique
     download_file(base_video_url, base_video_tmp)
         
-    volume = 0.8
-    audio_filter = f"[1:a]volume={volume}[voice];[0:a][voice]amix=inputs=2:duration=first[a]"
-
     # 2. Mixer l'audio et la vidéo
-    cmd = [
-    "ffmpeg",
-    "-i", base_video_tmp,
-    "-i", voiceover_tmp,
-    "-filter_complex", audio_filter,
-    "-map", "0:v:0",
-    "-map", "[a]",
-    "-c:v", "copy",
-    "-c:a", "aac",
-    "-shortest",
-    "-y",
-    output_path
-]
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-i", base_video_tmp,
+        "-i", voiceover_tmp,
+    ]
 
-    subprocess.run(cmd, check=True)
+    volume = 0.8
+    if has_audio(base_video_tmp):
+        audio_filter = f"[1:a]volume={volume}[voice];[0:a][voice]amix=inputs=2:duration=first[a]"
+        ffmpeg_cmd += ["-filter_complex", audio_filter, "-map", "0:v:0", "-map", "[a]"]
+    else:
+        # La vidéo n'a pas de son, on utilise uniquement le voiceover
+        audio_filter = f"[1:a]volume={volume}[a]"
+        ffmpeg_cmd += ["-filter_complex", audio_filter, "-map", "0:v:0", "-map", "[a]"]
+
+    ffmpeg_cmd += [
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
+        "-y",
+        output_path
+    ]
+
+    subprocess.run(ffmpeg_cmd, check=True)
 
     # SI ET SEULEMENT SI subprocess a réussi, on supprime la vidéo intermédiaire
     if os.path.exists(voiceover_tmp):
